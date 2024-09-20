@@ -9,6 +9,7 @@ import {
     getTrustArcGlobal,
     getNormalizedActiveGroupIds,
     getNormalizedCategories,
+    coerceConsentModel,
 } from './lib/trustarc-api'
 
 export interface TrustArcSettings {
@@ -44,8 +45,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
         },
         shouldLoadSegment: async (ctx) => {
             const TrustArc = getTrustArcGlobal()!
-            const consentModel =
-                TrustArc.eu.bindMap.behaviorManager == 'eu' ? 'opt-in' : 'opt-out'
+            const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
 
             if (consentModel === 'opt-out') {
                 return ctx.load({

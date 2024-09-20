@@ -12,23 +12,14 @@ type GroupInfoDto = {
 type TaConsentChangedEvent = CustomEvent<ActiveGroupIds>
 
 export enum TaConsentModel {
-    optIn = 'opt-in',
-    optOut = 'opt-out',
-    implicit = 'implied consent',
+    eu = 'eu',
+    us = 'us',
 }
 
-export interface TrustArcDomainData {
-    ShowAlertNotice: boolean
-    Groups: GroupInfoDto[]
-    ConsentModel: {
-        Name: TaConsentModel
-    }
-}
 /**
  * The data model used by the TrustArc lib
  */
 export interface TrustArcGlobal {
-    GetDomainData: () => TrustArcDomainData
     /**
      *  This callback appears to fire whenever the alert box is closed, no matter what.
      * E.g:
@@ -37,9 +28,16 @@ export interface TrustArcGlobal {
      * - if a user rejects all
      */
     OnConsentChanged: (cb: (event: TaConsentChangedEvent) => void) => void
-    IsAlertBoxClosed: () => boolean
-    eu: any
-    cma: any
+    eu: {
+        bindMap: {
+            behaviorManager: TaConsentModel,
+            categoryCount: number, 
+            domain: String
+        }
+    },
+    cma: {
+        callApi: (agr0: String, arg1: String) => any
+    }
 }
 
 export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
@@ -51,18 +49,13 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
 
     return trustArc
 }
-
-/**
- *  We don't support all consent models, so we need to coerce them to the ones we do support.
- */
 export const coerceConsentModel = (model: TaConsentModel): ConsentModel => {
     switch (model) {
-        case TaConsentModel.optIn:
-        case TaConsentModel.implicit:
+        case TaConsentModel.eu:
             return 'opt-in'
-        case TaConsentModel.optOut:
+        case TaConsentModel.us:
             return 'opt-out'
-        default: // there are some others like 'custom' / 'notice' that should be treated as 'opt-out'
+        default: 
             return 'opt-out'
     }
 }
