@@ -1,14 +1,9 @@
 import { Categories, ConsentModel } from '@segment/analytics-consent-tools'
 import { TrustArcApiValidationError } from './validation'
 /**
- * @example ["1", "2"]
+ * @example ["ta-1", "ta-2"]
  */
 type ActiveGroupIds = string[]
-
-type GroupInfoDto = {
-    CustomGroupId: string
-}
-
 type TaConsentChangedEvent = CustomEvent<ActiveGroupIds>
 
 export enum TaConsentModel {
@@ -45,7 +40,7 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
     // truste.cma enables the consent API
     // truste.eu.bindMap has all the consent manager settings
     const trustArc = (window as any).truste
-    if (!trustArc || !trustArc.cma || !trustArc.cma.callApi) return undefined
+    if (!trustArc || !trustArc.cma || !trustArc.cma.callApi || !trustArc.eu || !trustArc.eu.bindMap) return undefined
 
     return trustArc
 }
@@ -67,72 +62,61 @@ export type GroupInfo = {
 /**
  * get *all* groups / categories, not just active ones
  */
-export const getAllGroups = (): GroupInfo[] => {
+export const getAllCategories = (): GroupInfo[] => {
     const trustArcGlobal = getTrustArcGlobal()
     if (!trustArcGlobal) return []
 
-    // TrustArc groups are indexed starting from 1. So groups will be 1, 2, 3...., n where n is categoryCount;
+    // Segment has a limitation where the consent category can not be an integer. However TrustArc's categories are indexed as integer. 
+    // Here we will preappend a string "ta-" for compatinility with Segment.
+    // Bucketing will be "ta-1", "ta-2"... "ta-n" being n the amount of categories 
     const numberOfGroups = trustArcGlobal.eu.bindMap.categoryCount
     const consentGroups = []
 
     for (let index = 1; index <= numberOfGroups; index++) {
-        consentGroups.push({ groupId: `${index}` })
+        consentGroups.push({ groupId: `ta-${index}` })
     }
 
-    return consentGroups
+    return consentGroups;
 }
 
-export const getTrustArcActiveGroups = (): string | undefined => {
-    const groups = (window as any).TrustArcActiveGroups
-    if (!groups) return undefined
-    if (typeof groups !== 'string') {
-        throw new TrustArcApiValidationError(
-            `window.TrustArcActiveGroups is not a string`,
-            groups
-        )
-    }
-    return groups
-}
-
-/**
- * @example
- * ",1,2" => ["1", "2"]
- */
-const normalizeActiveGroupIds = (
-    trustArcActiveGroups: string
-): ActiveGroupIds => {
-    return trustArcActiveGroups.trim().split(',').filter(Boolean)
-}
-
-export const getNormalizedActiveGroupIds = (
-    trustArcActiveGroups = ''
-): ActiveGroupIds => {
+export const getNormalizedActiveGroupIds = (consentModel: string): ActiveGroupIds => {
     const trustArcGlobal = getTrustArcGlobal()
-    if (trustArcGlobal) {
-        const decision = trustArcGlobal.cma.callApi(
-            'getGDPRConsentDecision',
-            trustArcGlobal.eu.bindMap.domain
-        )
+    let trustArcActiveGroups: string[] = [];
 
-        trustArcActiveGroups = decision.consentDecision[0]
+    if (!trustArcGlobal) return [];
 
-        for (let index = 1; index < decision.consentDecision.length; index++) {
+    const decision = trustArcGlobal.cma.callApi(
+        'getGDPRConsentDecision',
+        trustArcGlobal.eu.bindMap.domain
+    )
+
+    // If the visitor has provided consent, then return their consent decision
+    if(decision.source == "asserted") {
+        for (let index = 0; index < decision.consentDecision.length; index++) {
             const element = decision.consentDecision[index]
-            trustArcActiveGroups += `,${element}`
+            trustArcActiveGroups.push(`ta-${element}`);
         }
+
+        return trustArcActiveGroups;
     }
 
-    if (!trustArcActiveGroups) {
-        return []
+    // At this point it means no consent was provided 
+    if(consentModel === 'opt-in') {
+        return ["ta-1"]; // Only the required bucket is approved when consent model is 'opt-in' and there's no consent
+    } else {
+        // consent model is US, eveything is enbaled until there's consent 
+        return getAllCategories().map((category) => category.groupId);
     }
 
-    return normalizeActiveGroupIds(trustArcActiveGroups || '')
+    return [];
 }
 
 export const getNormalizedCategories = (
-    activeGroupIds = getNormalizedActiveGroupIds()
+    consentModel: string
 ): Categories => {
-    return getAllGroups().reduce<Categories>((acc, group) => {
+    const activeGroupIds = getNormalizedActiveGroupIds(consentModel)
+
+    return getAllCategories().reduce<Categories>((acc, group) => {
         const categories = {
             ...acc,
             [group.groupId]: activeGroupIds.includes(group.groupId),

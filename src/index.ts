@@ -13,7 +13,7 @@ import {
 } from './lib/trustarc-api'
 
 export interface TrustArcSettings {
-    integrationCategoryMappings?: CreateWrapperSettings['integrationCategoryMappings']
+    // TODO: Add a check for this property to have the event disabled
     disableConsentChangedEvent?: boolean
     /**
      * Override configured consent model
@@ -24,6 +24,7 @@ export interface TrustArcSettings {
     /**
      * Enable debug logging for TrustArc wrapper
      */
+    // TODO: Add logs
     enableDebugLogging?: boolean
 }
 
@@ -36,6 +37,10 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
     analyticsInstance: Analytics,
     settings: TrustArcSettings = {}
 ): Analytics => {
+    const enableDebugLogging = settings && settings.enableDebugLogging === true;
+
+    enableDebugLogging && console.log("Loading Segment with TrustArc Wrapper", settings);
+
     return createWrapper<Analytics>({
         // wait for TrustArc global to be available before wrapper is loaded
         shouldLoadWrapper: async () => {
@@ -45,7 +50,17 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
         },
         shouldLoadSegment: async (ctx) => {
             const TrustArc = getTrustArcGlobal()!
-            const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+
+            let consentModel = 'opt-in'; // Default
+
+            if(settings.consentModel !== undefined) {
+                enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
+                consentModel = settings.consentModel();
+            } else {
+                // If there's no override, we obtain this from TrustArc's settings
+                consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+                enableDebugLogging && console.log(`Wrapper initilized with consent model: ${consentModel}`);
+            }
 
             if (consentModel === 'opt-out') {
                 return ctx.load({
@@ -53,18 +68,30 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
                 })
             } else {
                 await resolveWhen(() => {
-                    return Boolean(getNormalizedActiveGroupIds().length)
+                    const activeGroups = getNormalizedActiveGroupIds(consentModel);
+                    // Remove the first group as it's the required bucket
+                    activeGroups.shift();
+
+                    // Resolve if there's at least one group accepted (except the first group Required)
+                    return activeGroups.some(active => active)
                 }, 500)
                 return ctx.load({ consentModel: 'opt-in' })
             }
         },
-        getCategories: () => {
-            const results = getNormalizedCategories()
-            return results
-        },
+        getCategories: () => { 
+            const TrustArc = getTrustArcGlobal()!
+            const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+
+            return getNormalizedCategories(consentModel)
+        }
+            
+        ,
         registerOnConsentChanged: settings.disableConsentChangedEvent
             ? undefined
             : (setCategories) => {
+                const TrustArc = getTrustArcGlobal()!
+                const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+
                 window.addEventListener(
                     'message',
                     (e) => {
@@ -72,7 +99,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
                             const json = e && e.data != '' && JSON.parse(e.data)
                             if (json && json.message == 'submit_preferences') {
                                 // Once identified that the user's preferences were changed, take any actions. On this case we reload.
-                                const normalizedCategories = getNormalizedCategories()
+                                const normalizedCategories = getNormalizedCategories(consentModel)
                                 setCategories(normalizedCategories)
                             }
                         } catch (e) {
@@ -82,7 +109,6 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
                     false
                 )
             },
-        integrationCategoryMappings: settings.integrationCategoryMappings,
         enableDebugLogging: settings.enableDebugLogging,
     })(analyticsInstance)
 }
