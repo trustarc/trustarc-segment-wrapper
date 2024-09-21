@@ -1,7 +1,6 @@
 import {
     AnyAnalytics,
     createWrapper,
-    CreateWrapperSettings,
     resolveWhen,
 } from '@segment/analytics-consent-tools'
 
@@ -13,7 +12,6 @@ import {
 } from './lib/trustarc-api'
 
 export interface TrustArcSettings {
-    // TODO: Add a check for this property to have the event disabled
     disableConsentChangedEvent?: boolean
     /**
      * Override configured consent model
