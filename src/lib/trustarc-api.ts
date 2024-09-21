@@ -5,10 +5,20 @@ import { TrustArcApiValidationError } from './validation'
  */
 type ActiveGroupIds = string[]
 type TaConsentChangedEvent = CustomEvent<ActiveGroupIds>
-
+/*
+eu|us are the location managers primarily used for CCM Advanced 
+The others are for CCM Pro
+Please check the readme file for more information
+*/
 export enum TaConsentModel {
     eu = 'eu',
     us = 'us',
+    na = 'na',
+    an = 'an',
+    af = 'af',
+    as = 'as',
+    sa = 'sa',
+    oc = 'oc'
 }
 
 /**
@@ -47,8 +57,14 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
 export const coerceConsentModel = (model: TaConsentModel): ConsentModel => {
     switch (model) {
         case TaConsentModel.eu:
+        case TaConsentModel.an:
+        case TaConsentModel.af:
+        case TaConsentModel.as:
+        case TaConsentModel.sa:
+        case TaConsentModel.oc:
             return 'opt-in'
         case TaConsentModel.us:
+        case TaConsentModel.na:
             return 'opt-out'
         default: 
             return 'opt-out'
