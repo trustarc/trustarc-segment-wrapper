@@ -7,7 +7,14 @@ module.exports = {
   collectCoverage: true, // Enable coverage collection
   collectCoverageFrom: [
     'src/**/*.{js,ts,tsx}',
-    '!src/**/*.d.ts', // Exclude .d.ts files
+    '!src/**/*.d.ts', 
+    '!src/lib/dist/*', 
+    '!src/tests/*',
+    '!src/tests/dist/*',
+  ],
+  testPathIgnorePatterns: [
+    'src/lib/dist/',      // Exclude the tests directory from test execution
+    '<rootDir>/src/tests/dist/',
   ],
   globals: {
     "window": {}

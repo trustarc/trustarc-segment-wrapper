@@ -29,6 +29,19 @@ export interface TrustArcSettings {
     enableDebugLogging?: boolean
 }
 
+const shouldLoadWrapper = async () => {
+    await resolveWhen(() => {
+        return getTrustArcGlobal() !== undefined
+    }, 500)
+};
+
+const getCategories = () => { 
+    const TrustArc = getTrustArcGlobal()!
+    const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+
+    return getNormalizedCategories(consentModel)
+};
+
 /**
  *
  * @param analyticsInstance - An analytics instance. Either `window.analytics`, or the instance returned by `new AnalyticsBrowser()` or `AnalyticsBrowser.load({...})`
@@ -44,11 +57,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
 
     return createWrapper<Analytics>({
         // wait for TrustArc global to be available before wrapper is loaded
-        shouldLoadWrapper: async () => {
-            await resolveWhen(() => {
-                return getTrustArcGlobal() !== undefined
-            }, 500)
-        },
+        shouldLoadWrapper: shouldLoadWrapper,
         shouldLoadSegment: async (ctx) => {
             const TrustArc = getTrustArcGlobal()!
 
@@ -83,12 +92,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
                 return ctx.load({ consentModel: 'opt-in' })
             }
         },
-        getCategories: () => { 
-            const TrustArc = getTrustArcGlobal()!
-            const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
-
-            return getNormalizedCategories(consentModel)
-        },
+        getCategories: getCategories,
         registerOnConsentChanged: settings.disableConsentChangedEvent
             ? undefined
             : (setCategories) => {
@@ -116,6 +120,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
     })(analyticsInstance)
 }
 
-/*export const testHelpers = {
+export const testHelpers = {
     shouldLoadWrapper,
-  };*/
+    getCategories,
+};
