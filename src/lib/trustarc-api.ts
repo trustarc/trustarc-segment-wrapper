@@ -5,6 +5,7 @@ import { TrustArcApiValidationError } from './validation'
  */
 type ActiveGroupIds = string[]
 type TaConsentChangedEvent = CustomEvent<ActiveGroupIds>
+
 /*
 eu|us are the location managers primarily used for CCM Advanced 
 The others are for CCM Pro
@@ -22,6 +23,14 @@ export enum TaConsentModel {
 }
 
 /**
+ * Consent Experience can be banner (implied), or pop-up window (expressed)
+ */
+export enum TaConsentExperience {
+    implied = 'implied',
+    expressed = 'expressed'
+}
+
+/**
  * The data model used by the TrustArc lib
  */
 export interface TrustArcGlobal {
@@ -36,6 +45,7 @@ export interface TrustArcGlobal {
     eu: {
         bindMap: {
             behaviorManager: TaConsentModel,
+            behavior: string,
             categoryCount: number, 
             domain: String
         }
@@ -54,6 +64,7 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
 
     return trustArc
 }
+
 export const coerceConsentModel = (model: TaConsentModel): ConsentModel => {
     switch (model) {
         case TaConsentModel.eu:
@@ -137,6 +148,15 @@ export const getNormalizedCategories = (
             ...acc,
             [group.groupId]: activeGroupIds.includes(group.groupId),
         }
-        return categories
+        return categories;
     }, {})
+}
+
+export const getConsentExperience = (): string => {
+
+    const trustArcGlobal = getTrustArcGlobal()
+    if (!trustArcGlobal) return TaConsentExperience.implied
+
+    const behavior = trustArcGlobal.eu.bindMap.behavior
+    return behavior;
 }

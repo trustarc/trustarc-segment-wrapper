@@ -53,10 +53,17 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 - **default/other** - opt-out
 
-This wrapper uses the `EU | US` values from the notice_behavior cookie dropped for the CCM Advanced and `EU | NA | AN | AF | AS | SA | OC` for CCM Pro consent model according to the consent geolocation. Please refer to the TrustArc integration guide for a more comprehensive overview of the available options. If you are using `implied | expressed`, you can override this function according to your specific needs. The default behavior can be overridden by doing:
+This wrapper uses the `EU | US` values from the notice_behavior cookie dropped for the CCM Advanced and `EU | NA | AN | AF | AS | SA | OC` for CCM Pro consent model according to the consent geolocation. Please refer to the TrustArc integration guide for a more comprehensive overview of the available options. The default behavior can also be customized using your own logic:
 
 ```ts
 TrustArcWrapper.withTrustArc(analytics, { consentModel: () => 'opt-in' | 'opt-out' })
+  .load({ writeKey: '<MY_WRITE_KEY>' })
+```
+
+If you are using `implied | expressed` to define the consent experience, you can inform that using the parameter `consentModelBasedOnConsentExperience: true,`.
+
+```ts
+TrustArcWrapper.withTrustArc(analytics, { consentModelBasedOnConsentExperience: true })
   .load({ writeKey: '<MY_WRITE_KEY>' })
 ```
 
