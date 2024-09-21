@@ -110,3 +110,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
         enableDebugLogging: settings.enableDebugLogging,
     })(analyticsInstance)
 }
+
+/*export const testHelpers = {
+    shouldLoadWrapper,
+  };*/

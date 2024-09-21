@@ -22,7 +22,6 @@ export interface TrustArcGlobal {
      * - if a user makes a selection
      * - if a user rejects all
      */
-    OnConsentChanged: (cb: (event: TaConsentChangedEvent) => void) => void
     eu: {
         bindMap: {
             behaviorManager: TaConsentModel,
@@ -44,14 +43,14 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
 
     return trustArc
 }
-export const coerceConsentModel = (model: TaConsentModel): ConsentModel => {
+export const coerceConsentModel = (model: TaConsentModel | string): ConsentModel => {
     switch (model) {
         case TaConsentModel.eu:
             return 'opt-in'
         case TaConsentModel.us:
             return 'opt-out'
         default: 
-            return 'opt-out'
+            return 'opt-in'
     }
 }
 
@@ -64,7 +63,7 @@ export type GroupInfo = {
  */
 export const getAllCategories = (): GroupInfo[] => {
     const trustArcGlobal = getTrustArcGlobal()
-    if (!trustArcGlobal) return []
+    if (trustArcGlobal === undefined) return []
 
     // Segment has a limitation where the consent category can not be an integer. However TrustArc's categories are indexed as integer. 
     // Here we will preappend a string "ta-" for compatinility with Segment.
@@ -107,8 +106,6 @@ export const getNormalizedActiveGroupIds = (consentModel: string): ActiveGroupId
         // consent model is US, eveything is enbaled until there's consent 
         return getAllCategories().map((category) => category.groupId);
     }
-
-    return [];
 }
 
 export const getNormalizedCategories = (
