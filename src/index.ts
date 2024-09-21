@@ -9,6 +9,7 @@ import {
     getNormalizedActiveGroupIds,
     getNormalizedCategories,
     coerceConsentModel,
+    getConsentExperience,
 } from './lib/trustarc-api'
 
 export interface TrustArcSettings {
@@ -19,6 +20,8 @@ export interface TrustArcSettings {
      * - `opt-out`  (default) - load segment and all destinations without waiting for explicit consent.
      */
     consentModel?: () => 'opt-in' | 'opt-out'
+
+    consentModelBasedOnConsentExperience?: boolean
     /**
      * Enable debug logging for TrustArc wrapper
      */
@@ -50,8 +53,12 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
             const TrustArc = getTrustArcGlobal()!
 
             let consentModel = 'opt-in'; // Default
-
-            if(settings.consentModel !== undefined) {
+            
+            if(settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
+                consentModel = getConsentExperience();
+                enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
+            }
+            else if(settings.consentModel !== undefined) {
                 enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
                 consentModel = settings.consentModel();
             } else {
@@ -81,9 +88,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
             const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
 
             return getNormalizedCategories(consentModel)
-        }
-            
-        ,
+        },
         registerOnConsentChanged: settings.disableConsentChangedEvent
             ? undefined
             : (setCategories) => {
