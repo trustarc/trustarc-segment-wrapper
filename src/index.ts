@@ -70,7 +70,7 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
             let consentModel = 'opt-in'; // Default
             
             if(settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
-                consentModel = getConsentExperience();
+                consentModel = coerceConsentModel(getConsentExperience());
                 enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
             }
             else if(settings.consentModel !== undefined) {

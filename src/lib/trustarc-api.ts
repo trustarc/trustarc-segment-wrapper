@@ -74,8 +74,13 @@ export const coerceConsentModel = (model: TaConsentModel | string): ConsentModel
         case TaConsentModel.oc:
             return 'opt-in'
         case TaConsentModel.us:
+            case TaConsentModel.na:
         case TaConsentModel.na:
             return 'opt-out'
+        case 'implied':
+            return 'opt-out'
+        case 'expressed':
+            return 'opt-in'    
         default: 
             return 'opt-in'
     }
