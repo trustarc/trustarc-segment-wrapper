@@ -90,10 +90,3 @@ In order to get full ie11 support, you are expected to bring your own polyfills.
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.7.0/polyfill.min.js"></script>
 ```
-
-### Version History
-- We build the following versions of the library
-
-| Version | Release Date | Description      | Path |
-|---------|--------------|------------------|------|
-| `V1.0` | Sep 24, 2024| First release for the segment wrapper | `https://consent.trustarc.com/get?name=trustarc_segment_wrapper.js` |
