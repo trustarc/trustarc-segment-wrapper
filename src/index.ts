@@ -21,7 +21,13 @@ export interface TrustArcSettings {
      */
     consentModel?: () => 'opt-in' | 'opt-out'
 
+    /**
+     * When this setting is set to `true`, the consent experience will be based on the the behavior instead of the geoLocation detection
+     * - `expressed` - CCM Popup window is loaded for website visitors.
+     * - `implied`  - CCM Banner is loaded for new website visitors.
+     */
     consentModelBasedOnConsentExperience?: boolean
+    
     /**
      * Enable debug logging for TrustArc wrapper
      */
