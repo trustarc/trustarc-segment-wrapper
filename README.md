@@ -22,8 +22,13 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 ```html
 <head>
-  <!-- TrustArc Cookies Consent script start for trustarcdemo2.com -->
-  <script async="async" type="text/javascript" crossorigin="" src='//consent.trustarc.com/notice?domain=trustarcdemo2.com&c=teconsent&js=nj&noticeType=bb&gtm=1&'></script>
+
+  <!-- TrustArc Cookies Consent script start for CCM Advanced -->
+  <script async="async" type="text/javascript" crossorigin="" src='//consent.trustarc.com/notice?domain=<instanceid>&c=teconsent&js=nj&noticeType=bb&gtm=1&'></script>
+
+  <!-- TrustArc Cookies Consent script start for CCM Pro -->
+  <script type="text/javascript" async="async" src="https://consent.trustarc.com/v2/notice/<instanceid>"></script>
+
 
   <!-- Add Segment's TrustArc Consent Wrapper -->
   <script src="https://consent.trustarc.com/get?name=trustarc_segment_wrapper.js"></script>
@@ -85,3 +90,10 @@ In order to get full ie11 support, you are expected to bring your own polyfills.
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.7.0/polyfill.min.js"></script>
 ```
+
+### Version History
+- We build the following versions of the library
+
+| Version | Release Date | Description      | Path |
+|---------|--------------|------------------|------|
+| `V1.0` | Sep 24, 2024| First release for the segment wrapper | `https://consent.trustarc.com/get?name=trustarc_segment_wrapper.js` |
