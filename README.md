@@ -13,7 +13,8 @@ Ensure that consent is enabled and that you have registered your integration-to-
 
 If you don't see a "Consent Management" option like the one below, please contact Segment's support or your Segment Solutions Engineer to have it enabled on your workspace.
 
-<img width="957" alt="consent-mgmt-ui" src="https://github.com/user-attachments/assets/2ff19e45-188b-4e4d-90f4-91111c227272">
+<img width="1138" alt="Screenshot 2024-09-26 at 10 51 23 AM" src="https://github.com/user-attachments/assets/61838cf1-b5e9-45ea-8a04-5c400ad88781">
+
 
 - Debugging hints: this library expects the TrustArc CCM script to be available in order to interact with TrustArc. This library derives the category IDs that are active for the current user from the `window.truste` object provided by TrustArc API. 
 ## For snippet users
