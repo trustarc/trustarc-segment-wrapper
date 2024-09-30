@@ -49,6 +49,35 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 #### ⚠️ Reminder: _you must modify_ `analytics.load('....')` from the original Segment snippet. See markup comment in example above.
 
+## For `npm` library users
+
+1. Ensure that TrustArc Snippet is loaded.
+
+2. Install the package from npm
+
+```sh
+# npm
+npm install @trustarc/trustarc-segment-wrapper
+
+# yarn
+yarn add @trustarc/trustarc-segment-wrapper
+
+# pnpm
+pnpm add @trustarc/trustarc-segment-wrapper
+```
+
+3. Initialize alongside analytics
+
+```ts
+import { withTrustArc } from '@trustarc/trustarc-segment-wrapper'
+import { AnalyticsBrowser } from '@segment/analytics-next'
+
+export const analytics = new AnalyticsBrowser()
+
+withTrustArc(analytics).load({ writeKey: '<MY_WRITE_KEY'> })
+
+```
+
 ## Settings
 
 ### Consent Models
