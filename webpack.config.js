@@ -5,8 +5,7 @@ module.exports = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'var', // Expose as a global variable
-        library: 'TrustArcWrapper' // The name of the global variable
+        libraryTarget: 'commonjs2', // Expose it in Node as a CommonJS module
     },
     resolve: {
         extensions: ['.ts', '.js'], // Resolve these extensions

@@ -2,11 +2,15 @@
   "name": "@trustarc/trustarc-segment-wrapper",
   "version": "1.0.0",
   "description": "TrustArc wrapper for Segment",
-  "main": "index.js",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
     "test": "jest --watch",
-    "build": "rm -rf ./dist && webpack",
-    "build:cjs": "yarn tsc -p tsconfig.build.json --outDir ./dist/cjs --module commonjs"
+    "build": "npm run build:cjs && npm run build:esm && npm run build:umd",
+    "build:cjs": "tsc -p tsconfig.build.json --outDir ./dist/cjs --module commonjs",
+    "build:esm": "tsc -p tsconfig.build.json --outDir ./dist/esm --module esnext",
+    "build:umd": "webpack"
   },
   "author": "TrustArc",
   "license": "Apache-2.0",
