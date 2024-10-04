@@ -58,6 +58,8 @@ export const getTrustArcGlobal = (): TrustArcGlobal | undefined => {
     // truste is the global object for TrustArc
     // truste.cma enables the consent API
     // truste.eu.bindMap has all the consent manager settings
+    if(typeof window === 'undefined') return undefined;
+
     const trustArc = (window as any).truste
     if (!trustArc || !trustArc.cma || !trustArc.cma.callApi || !trustArc.eu || !trustArc.eu.bindMap) return undefined
 
