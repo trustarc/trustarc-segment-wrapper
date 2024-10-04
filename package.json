@@ -1,10 +1,10 @@
 {
   "name": "@trustarc/trustarc-segment-wrapper",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "TrustArc wrapper for Segment",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/bundle.js",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/types/src/index.d.ts",
   "scripts": {
     "test": "jest --watch",
     "build": "npm run build:cjs && npm run build:esm && npm run build:umd",

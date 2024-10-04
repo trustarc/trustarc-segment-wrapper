@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
     entry: './src/index.ts', // Your main file
     output: {
-        filename: 'bundle.js',
+        filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'commonjs2', // Expose it in Node as a CommonJS module
     },
