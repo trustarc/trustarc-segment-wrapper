@@ -36,12 +36,12 @@ If you don't see a "Consent Management" option like the one below, please contac
 
   <!--
     Add / Modify Segment Analytics Snippet
-    * Find and replace: analytics.load('<MY_WRITE_KEY'>) -> TrustArcWrapper.withTrustArc(analytics).load('<MY_WRITE_KEY'>)
+    * Find and replace: analytics.load('<MY_WRITE_KEY>') -> TrustArcWrapper.withTrustArc(analytics).load('<MY_WRITE_KEY'>)
   -->
   <script>
     !function(){var analytics=window.analytics...
     ....
-    TrustArcWrapper.withTrustArc(analytics).load('<MY_WRITE_KEY'>) // replace analytics.load()
+    TrustArcWrapper.withTrustArc(analytics).load('<MY_WRITE_KEY>') // replace analytics.load()
     analytics.page()
   </script>
 </head>
@@ -53,17 +53,20 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 1. Ensure that TrustArc Snippet is loaded.
 
-2. Install the package from npm
+2. Install both packages from your preferred package manager
 
 ```sh
 # npm
 npm install @trustarc/trustarc-segment-wrapper
+npm install @segment/analytics-next
 
 # yarn
 yarn add @trustarc/trustarc-segment-wrapper
+yarn add @segment/analytics-next   
 
 # pnpm
 pnpm add @trustarc/trustarc-segment-wrapper
+pnpm add @segment/analytics-next   
 ```
 
 3. Initialize alongside analytics
@@ -77,6 +80,21 @@ export const analytics = new AnalyticsBrowser()
 withTrustArc(analytics).load({ writeKey: '<MY_WRITE_KEY'> })
 
 ```
+- Here is an example of how you can load the CCM script with `useEffect`
+```ts
+useEffect (() => {
+    withTrustArc(analytics).load({ writeKey: '<MY_WRITE_KEY'>' })
+
+    const taScript = document.createElement("script");
+    taScript.src = "//consent.trustarc.com/notice?domain=<yourdomain.com>&c=teconsent&js=nj&noticeType=bb&gtm=1";
+    document.head.appendChild(taScript);
+   
+    return () => {
+      taScript.remove();
+    }
+  }, [])
+```
+
 
 ## Settings
 
