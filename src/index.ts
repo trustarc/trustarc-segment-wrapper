@@ -27,12 +27,23 @@ export interface TrustArcSettings {
      * - `implied`  - CCM Banner is loaded for new website visitors.
      */
     consentModelBasedOnConsentExperience?: boolean
-    
+
     /**
      * Enable debug logging for TrustArc wrapper
      */
     // TODO: Add logs
     enableDebugLogging?: boolean
+
+    /**
+     *
+     *  When this setting is set to true, segment will allways load as it's a requried category. 
+     *  It will stil populate the user's consent choices to prevent other destinations from loading, 
+     *  but will always load regardless so that requied destinations can load. 
+     *
+     *  IMPORTANT: Always check this with your privacy team before enabling this functionality;
+     *
+     */
+    allwaysLoadSegment?: boolean
 }
 
 const shouldLoadWrapper = async () => {
@@ -41,7 +52,7 @@ const shouldLoadWrapper = async () => {
     }, 500)
 };
 
-const getCategories = () => { 
+const getCategories = () => {
     const TrustArc = getTrustArcGlobal()!
     const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
 
@@ -68,12 +79,12 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
             const TrustArc = getTrustArcGlobal()!
 
             let consentModel = 'opt-in'; // Default
-            
-            if(settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
+
+            if (settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
                 consentModel = coerceConsentModel(getConsentExperience());
                 enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
             }
-            else if(settings.consentModel !== undefined) {
+            else if (settings.consentModel !== undefined) {
                 enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
                 consentModel = settings.consentModel();
             } else {
@@ -88,7 +99,13 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
                 })
             } else {
                 await resolveWhen(() => {
+                    // If segment is supposed to always load, then no need to check for active groups. 
+                    if (settings.allwaysLoadSegment != undefined && settings.allwaysLoadSegment) {
+                        return true;
+                    }
+
                     const activeGroups = getNormalizedActiveGroupIds(consentModel);
+
                     // Remove the first group as it's the required bucket
                     activeGroups.shift();
 
