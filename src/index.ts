@@ -35,15 +35,14 @@ export interface TrustArcSettings {
     enableDebugLogging?: boolean
 
     /**
-     *
-     *  When this setting is set to true, segment will allways load as it's a requried category. 
+     *  When this setting is set to true, segment will always load as it's a requried category. 
      *  It will stil populate the user's consent choices to prevent other destinations from loading, 
      *  but will always load regardless so that requied destinations can load. 
      *
      *  IMPORTANT: Always check this with your privacy team before enabling this functionality;
      *
      */
-    allwaysLoadSegment?: boolean
+    alwaysLoadSegment?: boolean
 }
 
 const shouldLoadWrapper = async () => {
@@ -59,6 +58,53 @@ const getCategories = () => {
     return getNormalizedCategories(consentModel)
 };
 
+
+/**
+ *  Function to define when Segment should load. 
+ *
+ */
+const shouldLoadSegment = async (ctx: any, settings: TrustArcSettings) => {
+    const TrustArc = getTrustArcGlobal()!
+    const enableDebugLogging = settings && settings.enableDebugLogging === true;
+
+    let consentModel = 'opt-in'; // Default
+
+    if (settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
+        consentModel = coerceConsentModel(getConsentExperience());
+        enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
+    }
+    else if (settings.consentModel !== undefined) {
+        enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
+        consentModel = settings.consentModel();
+    } else {
+        // If there's no override, we obtain this from TrustArc's settings
+        consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+        enableDebugLogging && console.log(`Wrapper initilized with consent model: ${consentModel}`);
+    }
+
+    if (consentModel === 'opt-out') {
+        return ctx.load({
+            consentModel: 'opt-out',
+        })
+    } else {
+        await resolveWhen(() => {
+            // If segment is supposed to always load, then no need to check for active groups. 
+            if (settings.alwaysLoadSegment != undefined && settings.alwaysLoadSegment) {
+                return true;
+            }
+
+            const activeGroups = getNormalizedActiveGroupIds(consentModel);
+
+            // Remove the first group as it's the required bucket
+            activeGroups.shift();
+
+            // Resolve if there's at least one group accepted (except the first group Required)
+            return activeGroups.some(active => active)
+        }, 500)
+        return ctx.load({ consentModel: 'opt-in' })
+    }
+};
+
 /**
  *
  * @param analyticsInstance - An analytics instance. Either `window.analytics`, or the instance returned by `new AnalyticsBrowser()` or `AnalyticsBrowser.load({...})`
@@ -69,52 +115,12 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
     settings: TrustArcSettings = {}
 ): Analytics => {
     const enableDebugLogging = settings && settings.enableDebugLogging === true;
-
     enableDebugLogging && console.log("Loading Segment with TrustArc Wrapper", settings);
 
     return createWrapper<Analytics>({
         // wait for TrustArc global to be available before wrapper is loaded
         shouldLoadWrapper: shouldLoadWrapper,
-        shouldLoadSegment: async (ctx) => {
-            const TrustArc = getTrustArcGlobal()!
-
-            let consentModel = 'opt-in'; // Default
-
-            if (settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
-                consentModel = coerceConsentModel(getConsentExperience());
-                enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
-            }
-            else if (settings.consentModel !== undefined) {
-                enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
-                consentModel = settings.consentModel();
-            } else {
-                // If there's no override, we obtain this from TrustArc's settings
-                consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
-                enableDebugLogging && console.log(`Wrapper initilized with consent model: ${consentModel}`);
-            }
-
-            if (consentModel === 'opt-out') {
-                return ctx.load({
-                    consentModel: 'opt-out',
-                })
-            } else {
-                await resolveWhen(() => {
-                    // If segment is supposed to always load, then no need to check for active groups. 
-                    if (settings.allwaysLoadSegment != undefined && settings.allwaysLoadSegment) {
-                        return true;
-                    }
-
-                    const activeGroups = getNormalizedActiveGroupIds(consentModel);
-
-                    // Remove the first group as it's the required bucket
-                    activeGroups.shift();
-
-                    // Resolve if there's at least one group accepted (except the first group Required)
-                    return activeGroups.some(active => active)
-                }, 500)
-                return ctx.load({ consentModel: 'opt-in' })
-            }
-        },
+        shouldLoadSegment: (ctx) => shouldLoadSegment(ctx, settings),
         getCategories: getCategories,
         registerOnConsentChanged: settings.disableConsentChangedEvent
             ? undefined
@@ -146,4 +152,5 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
 export const testHelpers = {
     shouldLoadWrapper,
     getCategories,
+    shouldLoadSegment
 };
