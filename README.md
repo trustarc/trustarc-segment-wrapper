@@ -122,7 +122,7 @@ TrustArcWrapper.withTrustArc(analytics, { consentModelBasedOnConsentExperience: 
 
 ### Always Load Segment
 
-If you are using Segment as a Required vendor, you can pass an additional parameter for Segment to load even on opt-in locations before there's any consent provided. This will allow Segment to load, while making sure that the visitor's consent choices are still propagated so that the destinations that are not mapped as required no no load. 
+If you are using Segment as a Required vendor, you can pass an additional parameter for Segment to load even on opt-in locations before there's any consent provided. This will allow Segment to load, while making sure that the visitor's consent choices are still propagated so that the destinations that are not mapped as required will not load. 
 
 IMPORTANT: Please always consult with your privacy team before enabling this option; 
 
