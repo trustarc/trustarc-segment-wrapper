@@ -32,7 +32,7 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 
   <!-- Add Segment's TrustArc Consent Wrapper -->
-  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.0.js"></script>
+  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.1.js"></script>
 
   <!--
     Add / Modify Segment Analytics Snippet
@@ -121,6 +121,8 @@ TrustArcWrapper.withTrustArc(analytics, { consentModelBasedOnConsentExperience: 
 ```
 
 ### Always Load Segment
+
+#### Feature available in version 1.1 and later
 
 If you are using Segment as a Required vendor, you can pass an additional parameter for Segment to load even on opt-in locations before there's any consent provided. This will allow Segment to load, while making sure that the visitor's consent choices are still propagated so that the destinations that are not mapped as required will not load. 
 
