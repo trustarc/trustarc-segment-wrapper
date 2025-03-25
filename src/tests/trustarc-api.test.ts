@@ -57,6 +57,14 @@ describe("coerceConsentModel", () => {
     test('Should return opt-in when the behavior value is different from us or eu', () => {
         expect(coerceConsentModel("somerandomstring")).toBe("opt-in");
     });
+
+    test('Should return opt-out when the behavior value is implied', () => {
+        expect(coerceConsentModel("implied")).toBe("opt-out");
+    });
+
+    test('Should return opt-in when the behavior value is expressed', () => {
+        expect(coerceConsentModel("expressed")).toBe("opt-in");
+    });
 });
 
 

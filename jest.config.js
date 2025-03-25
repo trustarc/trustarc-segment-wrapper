@@ -1,22 +1,27 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 module.exports = {
-  testEnvironment: "jsdom",
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/src'],
   transform: {
-    "^.+.tsx?$": ["ts-jest",{}],
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  collectCoverage: true, // Enable coverage collection
+  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
-    'src/**/*.{js,ts,tsx}',
-    '!src/**/*.d.ts', 
-    '!src/lib/dist/*', 
-    '!src/tests/*',
-    '!src/tests/dist/*',
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.test.{ts,tsx}',
+    '!src/**/*.spec.{ts,tsx}',
+    '!src/tests/**/*'
   ],
-  testPathIgnorePatterns: [
-    'src/lib/dist/',      // Exclude the tests directory from test execution
-    '<rootDir>/src/tests/dist/',
-  ],
-  globals: {
-    "window": {}
-  }
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  },
+  setupFiles: ['<rootDir>/src/tests/setup.ts']
 };
