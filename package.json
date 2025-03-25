@@ -8,10 +8,11 @@
   "scripts": {
     "test": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build": "npm run build:cjs && npm run build:esm && npm run build:umd",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:umd && npm run build:standalone",
     "build:cjs": "tsc -p tsconfig.build.json --outDir ./dist/cjs --module commonjs",
     "build:esm": "tsc -p tsconfig.build.json --outDir ./dist/esm --module esnext",
     "build:umd": "webpack",
+    "build:standalone": "webpack --config webpack.standalone.config.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
