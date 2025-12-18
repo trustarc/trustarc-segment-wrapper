@@ -5,6 +5,12 @@
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
   "types": "./dist/types/src/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "LICENSE.txt",
+    "README.md"
+  ],
   "scripts": {
     "test": "jest --watch",
     "build": "npm run build:cjs && npm run build:esm && npm run build:umd",
