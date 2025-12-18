@@ -12,6 +12,8 @@ import {
     getConsentExperience,
 } from './lib/trustarc-api'
 
+import { log } from './lib/logger'
+
 export interface TrustArcSettings {
     disableConsentChangedEvent?: boolean
     /**
@@ -31,7 +33,6 @@ export interface TrustArcSettings {
     /**
      * Enable debug logging for TrustArc wrapper
      */
-    // TODO: Add logs
     enableDebugLogging?: boolean
 
     /**
@@ -42,20 +43,64 @@ export interface TrustArcSettings {
      *  IMPORTANT: Always check this with your privacy team before enabling this functionality;
      *
      */
-    alwaysLoadSegment?: boolean
+    alwaysLoadSegment?: boolean,
+
+    /**
+     * 
+     * When this setting is set to true, locations that are not explicitly provisioned in TrustArc will be considered as opt-out.
+     * 
+     */
+    considerUnprovisionedLocationsAsOptOut?: boolean
 }
 
 const shouldLoadWrapper = async () => {
     await resolveWhen(() => {
-        return getTrustArcGlobal() !== undefined
+        const TrustArc = getTrustArcGlobal()
+
+        // Wrapper can load when TrustArc is done loading the the API is ready
+        return TrustArc !== undefined && TrustArc.cma !== undefined
     }, 500)
 };
 
-const getCategories = () => {
-    const TrustArc = getTrustArcGlobal()!
-    const consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+
+const getCategories = (settings: TrustArcSettings) => {
+    const consentModel = getConsentModel(settings);
 
     return getNormalizedCategories(consentModel)
+};
+
+const getConsentModel = (settings: TrustArcSettings) => {
+    const TrustArc = getTrustArcGlobal()!
+    let consentModel = 'opt-in';
+
+    // When the location is unprovisioned, we consider it as opt-out if the setting is enabled.
+    // If the setting is not enabled, we continue with the normal flow as unprovisioned locations 
+    // will be treated as opt-in by default or use the configured defaults when consentModelBasedOnConsentExperience is used.
+    if(settings.considerUnprovisionedLocationsAsOptOut === true) {
+        const consentDecision = TrustArc.cma.callApi('getGDPRConsentDecision', window.location.hostname);
+        if(consentDecision.source === 'unprovisioned') {
+            settings.enableDebugLogging && log('getConsentModel triggered and returned opt-out based on unprovisioned location.');
+            return 'opt-out';
+        }
+    }
+
+    if (settings.consentModelBasedOnConsentExperience === true) {
+        consentModel = coerceConsentModel(getConsentExperience());
+        settings.enableDebugLogging && log(`getConsentModel triggered and returned ${consentModel} based on consent experience.`);
+        return consentModel;
+    }
+
+    if (typeof settings.consentModel === 'function') {
+        consentModel = settings.consentModel();
+        settings.enableDebugLogging && log(`getConsentModel triggered and returned ${consentModel} based on overridden consent model function.`);
+        return consentModel;
+    }
+
+
+    // If no custom settings, use TrustArc's default behavior
+    consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
+    settings.enableDebugLogging && log(`getConsentModel triggered and returned ${consentModel} based on behaviorManager.`);
+    return consentModel
 };
 
 
@@ -64,23 +109,7 @@ const getCategories = () => {
  *
  */
 const shouldLoadSegment = async (ctx: any, settings: TrustArcSettings) => {
-    const TrustArc = getTrustArcGlobal()!
-    const enableDebugLogging = settings && settings.enableDebugLogging === true;
-
-    let consentModel = 'opt-in'; // Default
-
-    if (settings.consentModelBasedOnConsentExperience != undefined && settings.consentModelBasedOnConsentExperience == true) {
-        consentModel = coerceConsentModel(getConsentExperience());
-        enableDebugLogging && console.log(`Wrapper initilized with consent model based on consent experience: ${consentModel}`);
-    }
-    else if (settings.consentModel !== undefined) {
-        enableDebugLogging && console.log(`Wrapper initilized with overriden consent model: ${settings.consentModel()}`);
-        consentModel = settings.consentModel();
-    } else {
-        // If there's no override, we obtain this from TrustArc's settings
-        consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
-        enableDebugLogging && console.log(`Wrapper initilized with consent model: ${consentModel}`);
-    }
+    const consentModel = getConsentModel(settings);
 
     if (consentModel === 'opt-out') {
         return ctx.load({
@@ -115,13 +144,13 @@ export const withTrustArc = <Analytics extends AnyAnalytics>(
     settings: TrustArcSettings = {}
 ): Analytics => {
     const enableDebugLogging = settings && settings.enableDebugLogging === true;
-    enableDebugLogging && console.log("Loading Segment with TrustArc Wrapper", settings);
+    enableDebugLogging && log("Loading Segment with TrustArc Wrapper", settings);
 
     return createWrapper<Analytics>({
         // wait for TrustArc global to be available before wrapper is loaded
         shouldLoadWrapper: shouldLoadWrapper,
         shouldLoadSegment: (ctx) => shouldLoadSegment(ctx, settings),
-        getCategories: getCategories,
+        getCategories: () => getCategories(settings),
         registerOnConsentChanged: settings.disableConsentChangedEvent
             ? undefined
             : (setCategories) => {
