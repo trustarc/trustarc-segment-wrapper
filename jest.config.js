@@ -15,6 +15,7 @@ module.exports = {
   testPathIgnorePatterns: [
     'src/lib/dist/',      // Exclude the tests directory from test execution
     '<rootDir>/src/tests/dist/',
+    '<rootDir>/dist/',    // Exclude compiled output from test execution
   ],
   globals: {
     "window": {}

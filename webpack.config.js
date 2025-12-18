@@ -5,7 +5,11 @@ module.exports = {
     output: {
         filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'commonjs2', // Expose it in Node as a CommonJS module
+        library: {
+            name: 'TrustArcWrapper',
+            type: 'umd',
+        },
+        globalObject: 'this',
     },
     resolve: {
         extensions: ['.ts', '.js'], // Resolve these extensions
