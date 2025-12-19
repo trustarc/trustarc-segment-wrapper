@@ -46,9 +46,7 @@ export interface TrustArcSettings {
     alwaysLoadSegment?: boolean,
 
     /**
-     * 
      * When this setting is set to true, locations that are not explicitly provisioned in TrustArc will be considered as opt-out.
-     * 
      */
     considerUnprovisionedLocationsAsOptOut?: boolean
 }
@@ -57,7 +55,7 @@ const shouldLoadWrapper = async () => {
     await resolveWhen(() => {
         const TrustArc = getTrustArcGlobal()
 
-        // Wrapper can load when TrustArc is done loading the the API is ready
+        // Wrapper can load when TrustArc is done loading and the API is ready
         return TrustArc !== undefined && TrustArc.cma !== undefined
     }, 500)
 };
@@ -76,9 +74,9 @@ const getConsentModel = (settings: TrustArcSettings) => {
     // When the location is unprovisioned, we consider it as opt-out if the setting is enabled.
     // If the setting is not enabled, we continue with the normal flow as unprovisioned locations 
     // will be treated as opt-in by default or use the configured defaults when consentModelBasedOnConsentExperience is used.
-    if(settings.considerUnprovisionedLocationsAsOptOut === true) {
+    if (settings.considerUnprovisionedLocationsAsOptOut === true) {
         const consentDecision = TrustArc.cma.callApi('getGDPRConsentDecision', window.location.hostname);
-        if(consentDecision.source === 'unprovisioned') {
+        if (consentDecision.source === 'unprovisioned') {
             settings.enableDebugLogging && log('getConsentModel triggered and returned opt-out based on unprovisioned location.');
             return 'opt-out';
         }
@@ -100,7 +98,7 @@ const getConsentModel = (settings: TrustArcSettings) => {
     // If no custom settings, use TrustArc's default behavior
     consentModel = coerceConsentModel(TrustArc.eu.bindMap.behaviorManager);
     settings.enableDebugLogging && log(`getConsentModel triggered and returned ${consentModel} based on behaviorManager.`);
-    return consentModel
+    return consentModel;
 };
 
 
