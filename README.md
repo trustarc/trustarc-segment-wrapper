@@ -135,6 +135,8 @@ TrustArcWrapper.withTrustArc(analytics, { alwaysLoadSegment: true })
 
 ### Consider Unprovisioned Locations as Opt-Out
 
+### Flag is currently available only on version 1.1.2-beta.0 via npm
+
 When you have locations that are not set in TrustArc's location settings (unprovisioned locations), by default the wrapper loads in opt-in mode. In such scenarios, it will remain in opt-in mode since unprovisioned locations will not provide a banner or option for users to make a consent decision. 
 
 If you want unprovisioned locations to load all destinations by default instead, you can use the `considerUnprovisionedLocationsAsOptOut` parameter to treat unprovisioned locations as opt-out.
