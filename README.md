@@ -133,21 +133,33 @@ TrustArcWrapper.withTrustArc(analytics, { alwaysLoadSegment: true })
   .load({ writeKey: '<MY_WRITE_KEY>' })
 ```
 
+### Consider Unprovisioned Locations as Opt-Out
+
+When you have locations that are not set in TrustArc's location settings (unprovisioned locations), by default the wrapper loads in opt-in mode. In such scenarios, it will remain in opt-in mode since unprovisioned locations will not provide a banner or option for users to make a consent decision. 
+
+If you want unprovisioned locations to load all destinations by default instead, you can use the `considerUnprovisionedLocationsAsOptOut` parameter to treat unprovisioned locations as opt-out.
+
+```ts
+TrustArcWrapper.withTrustArc(analytics, { considerUnprovisionedLocationsAsOptOut: true })
+  .load({ writeKey: '<MY_WRITE_KEY>' })
+```
+
+**Note:** Please consult with your privacy team before enabling this option to ensure it aligns with your consent requirements.
+
 ## Environments
 
 ### Build Artifacts
 
-- We build the following versions of the library
+The library is built in multiple formats to support different use cases:
 
 | Format | Description | Path |
 |--------|-------------|------|
-| `amd` (amd bundle) | When a AMD bundle is required | `trustarc_segment_wrapper.js` |
+| **UMD** | Universal Module Definition - works in browsers via `<script>` tag and module loaders | `dist/index.js` |
+| **CommonJS** | For Node.js and bundlers like webpack | `dist/cjs/src/index.js` |
+| **ESM** | ES Modules for modern bundlers and native browser imports | `dist/esm/src/index.js` |
 
 ### Browser Support
-- `amd` - Support back to IE11, but **do not** polyfill . See our docs on [supported browsers](https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/supported-browsers).
 
-In order to get full ie11 support, you are expected to bring your own polyfills. e.g. adding the following to your script tag:
+This library supports all modern browsers. For supported browsers, see the [Segment Analytics.js documentation](https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/supported-browsers).
 
-```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.7.0/polyfill.min.js"></script>
-```
+**Note:** For legacy browser support, you may need to include polyfills for features like Promises, Object.assign, and Array methods depending on your target browsers.
