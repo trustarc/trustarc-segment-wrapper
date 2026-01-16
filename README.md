@@ -32,7 +32,7 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 
   <!-- Add Segment's TrustArc Consent Wrapper -->
-  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.1.2js"></script>
+  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.1.2.js"></script>
 
   <!--
     Add / Modify Segment Analytics Snippet
