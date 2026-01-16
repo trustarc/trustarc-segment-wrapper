@@ -32,7 +32,7 @@ If you don't see a "Consent Management" option like the one below, please contac
 
 
   <!-- Add Segment's TrustArc Consent Wrapper -->
-  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.1.js"></script>
+  <script src="https://consent.trustarc.com/get?name=trustarc-segment-wrapper-v1.1.2js"></script>
 
   <!--
     Add / Modify Segment Analytics Snippet
@@ -135,7 +135,7 @@ TrustArcWrapper.withTrustArc(analytics, { alwaysLoadSegment: true })
 
 ### Consider Unprovisioned Locations as Opt-Out
 
-### Flag is currently available only on version 1.1.2-beta.0 via npm
+### Flag is currently available only on version 1.1.2 via npm
 
 When you have locations that are not set in TrustArc's location settings (unprovisioned locations), by default the wrapper loads in opt-in mode. In such scenarios, it will remain in opt-in mode since unprovisioned locations will not provide a banner or option for users to make a consent decision. 
 
