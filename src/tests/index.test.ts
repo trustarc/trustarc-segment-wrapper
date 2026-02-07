@@ -1,9 +1,11 @@
 import {
     testHelpers,
     TrustArcSettings,
+    withTrustArc,
 } from '../'
 
 import { getTrustArcGlobal } from '../lib/trustarc-api';
+import { createWrapper } from '@segment/analytics-consent-tools';
 
 
 
@@ -41,7 +43,7 @@ describe("getCategories", () => {
                 }
             },
             cma: {
-                callApi: (a: string, b: string) => {
+                callApi: (_a: string, _b: string) => {
                     return {
                         source: "asserted",
                         consentDecision: [1, 2, 3, 4]
@@ -53,6 +55,124 @@ describe("getCategories", () => {
         const settings: TrustArcSettings = {};
         const categories = testHelpers.getCategories(settings);
 
+        expect(categories).toEqual({ "ta-1": true, "ta-2": true, "ta-3": true, "ta-4": true });
+    });
+
+    test("should use consentModelBasedOnConsentExperience when set to true with expressed behavior", () => {
+        // Mock the window.truste global variable with expressed consent experience
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: "us",
+                    categoryCount: 4,
+                    domain: "test.com",
+                    behavior: "expressed"
+                }
+            },
+            cma: {
+                callApi: (_a: string, _b: string) => {
+                    return {
+                        source: "implied",
+                        consentDecision: []
+                    }
+                }
+            }
+        };
+
+        const settings: TrustArcSettings = {
+            consentModelBasedOnConsentExperience: true
+        };
+        const categories = testHelpers.getCategories(settings);
+
+        // With expressed behavior and opt-in model, only required category should be true
+        expect(categories).toEqual({ "ta-1": true, "ta-2": false, "ta-3": false, "ta-4": false });
+    });
+
+    test("should use consentModelBasedOnConsentExperience when set to true with implied behavior", () => {
+        // Mock the window.truste global variable with implied consent experience
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: "eu",
+                    categoryCount: 4,
+                    domain: "test.com",
+                    behavior: "implied"
+                }
+            },
+            cma: {
+                callApi: (_a: string, _b: string) => {
+                    return {
+                        source: "implied",
+                        consentDecision: []
+                    }
+                }
+            }
+        };
+
+        const settings: TrustArcSettings = {
+            consentModelBasedOnConsentExperience: true
+        };
+        const categories = testHelpers.getCategories(settings);
+
+        // With implied behavior and opt-out model, all categories should be true
+        expect(categories).toEqual({ "ta-1": true, "ta-2": true, "ta-3": true, "ta-4": true });
+    });
+
+    test("should use custom consentModel function when provided", () => {
+        // Mock the window.truste global variable
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: "us",
+                    categoryCount: 4,
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: (_a: string, _b: string) => {
+                    return {
+                        source: "implied",
+                        consentDecision: []
+                    }
+                }
+            }
+        };
+
+        const settings: TrustArcSettings = {
+            consentModel: () => 'opt-in'
+        };
+        const categories = testHelpers.getCategories(settings);
+
+        // Custom function returns opt-in, so only required category should be true
+        expect(categories).toEqual({ "ta-1": true, "ta-2": false, "ta-3": false, "ta-4": false });
+    });
+
+    test("should use custom consentModel function returning opt-out", () => {
+        // Mock the window.truste global variable
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: "eu",
+                    categoryCount: 4,
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: (_a: string, _b: string) => {
+                    return {
+                        source: "implied",
+                        consentDecision: []
+                    }
+                }
+            }
+        };
+
+        const settings: TrustArcSettings = {
+            consentModel: () => 'opt-out'
+        };
+        const categories = testHelpers.getCategories(settings);
+
+        // Custom function returns opt-out, so all categories should be true
         expect(categories).toEqual({ "ta-1": true, "ta-2": true, "ta-3": true, "ta-4": true });
     });
 
@@ -273,6 +393,303 @@ describe('shouldLoadSegment', () => {
         expect(ctx.load).toHaveBeenCalledWith({
             consentModel: 'opt-in',
         });
+    });
+
+    it('should load with opt-out when consentModelBasedOnConsentExperience is true and behavior is implied', async () => {
+        const mockTrustArc = {
+            eu: {
+                bindMap: {
+                    behaviorManager: 'eu',
+                    categoryCount: 4,
+                    domain: 'test.com',
+                    behavior: 'implied'
+                }
+            },
+            cma: {
+                callApi: jest.fn().mockReturnValue({
+                    source: 'implied',
+                    consentDecision: [],
+                }),
+            },
+        };
+
+        (getTrustArcGlobal as jest.Mock).mockReturnValue(mockTrustArc);
+
+        const ctx = { load: jest.fn() };
+        const settings: TrustArcSettings = {
+            consentModelBasedOnConsentExperience: true
+        };
+
+        await testHelpers.shouldLoadSegment(ctx, settings);
+
+        // Implied behavior should result in opt-out
+        expect(ctx.load).toHaveBeenCalledWith({
+            consentModel: 'opt-out',
+        });
+    });
+
+    it('should load with opt-in when consentModelBasedOnConsentExperience is true and behavior is expressed', async () => {
+        const mockTrustArc = {
+            eu: {
+                bindMap: {
+                    behaviorManager: 'us',
+                    categoryCount: 4,
+                    domain: 'test.com',
+                    behavior: 'expressed'
+                }
+            },
+            cma: {
+                callApi: jest.fn().mockReturnValue({
+                    source: 'implied',
+                    consentDecision: [],
+                }),
+            },
+        };
+
+        (getTrustArcGlobal as jest.Mock).mockReturnValue(mockTrustArc);
+
+        const ctx = { load: jest.fn() };
+        const settings: TrustArcSettings = {
+            consentModelBasedOnConsentExperience: true,
+            alwaysLoadSegment: true
+        };
+
+        await testHelpers.shouldLoadSegment(ctx, settings);
+
+        // Expressed behavior should result in opt-in
+        expect(ctx.load).toHaveBeenCalledWith({
+            consentModel: 'opt-in',
+        });
+    });
+
+    it('should load with opt-out when custom consentModel function returns opt-out', async () => {
+        const mockTrustArc = {
+            eu: {
+                bindMap: {
+                    behaviorManager: 'eu',
+                    categoryCount: 4,
+                    domain: 'test.com',
+                }
+            },
+            cma: {
+                callApi: jest.fn().mockReturnValue({
+                    source: 'implied',
+                    consentDecision: [],
+                }),
+            },
+        };
+
+        (getTrustArcGlobal as jest.Mock).mockReturnValue(mockTrustArc);
+
+        const ctx = { load: jest.fn() };
+        const settings: TrustArcSettings = {
+            consentModel: () => 'opt-out'
+        };
+
+        await testHelpers.shouldLoadSegment(ctx, settings);
+
+        // Custom function returns opt-out
+        expect(ctx.load).toHaveBeenCalledWith({
+            consentModel: 'opt-out',
+        });
+    });
+
+    it('should load with opt-in when custom consentModel function returns opt-in', async () => {
+        const mockTrustArc = {
+            eu: {
+                bindMap: {
+                    behaviorManager: 'us',
+                    categoryCount: 4,
+                    domain: 'test.com',
+                }
+            },
+            cma: {
+                callApi: jest.fn().mockReturnValue({
+                    source: 'implied',
+                    consentDecision: [],
+                }),
+            },
+        };
+
+        (getTrustArcGlobal as jest.Mock).mockReturnValue(mockTrustArc);
+
+        const ctx = { load: jest.fn() };
+        const settings: TrustArcSettings = {
+            consentModel: () => 'opt-in',
+            alwaysLoadSegment: true
+        };
+
+        await testHelpers.shouldLoadSegment(ctx, settings);
+
+        // Custom function returns opt-in
+        expect(ctx.load).toHaveBeenCalledWith({
+            consentModel: 'opt-in',
+        });
+    });
+});
+
+// Mock createWrapper
+jest.mock('@segment/analytics-consent-tools', () => ({
+    createWrapper: jest.fn(),
+    resolveWhen: jest.requireActual('@segment/analytics-consent-tools').resolveWhen,
+}));
+
+describe('withTrustArc and registerOnConsentChanged', () => {
+    let mockAnalytics: any;
+    let capturedConfig: any;
+
+    beforeEach(() => {
+        // Reset mocks
+        jest.clearAllMocks();
+
+        // Mock analytics instance
+        mockAnalytics = {
+            track: jest.fn(),
+            identify: jest.fn(),
+        };
+
+        // Mock createWrapper to capture the config and return a function that returns the analytics instance
+        (createWrapper as jest.Mock).mockImplementation((config) => {
+            capturedConfig = config;
+            return (analytics: any) => analytics;
+        });
+
+        // Mock TrustArc global
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: 'eu',
+                    categoryCount: 4,
+                    domain: 'test.com',
+                }
+            },
+            cma: {
+                callApi: jest.fn().mockReturnValue({
+                    source: 'asserted',
+                    consentDecision: [1, 2, 3, 4],
+                }),
+            },
+        };
+    });
+
+    afterEach(() => {
+        window.truste = undefined;
+        jest.restoreAllMocks();
+    });
+
+    test('should register consent changed event handler when disableConsentChangedEvent is false', () => {
+        const settings: TrustArcSettings = {
+            disableConsentChangedEvent: false,
+        };
+
+        withTrustArc(mockAnalytics, settings);
+
+        expect(createWrapper).toHaveBeenCalled();
+        expect(capturedConfig.registerOnConsentChanged).toBeDefined();
+        expect(typeof capturedConfig.registerOnConsentChanged).toBe('function');
+    });
+
+    test('should not register consent changed event handler when disableConsentChangedEvent is true', () => {
+        const settings: TrustArcSettings = {
+            disableConsentChangedEvent: true,
+        };
+
+        withTrustArc(mockAnalytics, settings);
+
+        expect(createWrapper).toHaveBeenCalled();
+        expect(capturedConfig.registerOnConsentChanged).toBeUndefined();
+    });
+
+    test('should handle submit_preferences message event', () => {
+        const settings: TrustArcSettings = {};
+        const mockSetCategories = jest.fn();
+
+        withTrustArc(mockAnalytics, settings);
+
+        // Get the registered callback
+        const registerCallback = capturedConfig.registerOnConsentChanged;
+        expect(registerCallback).toBeDefined();
+
+        // Call the callback with mockSetCategories
+        registerCallback(mockSetCategories);
+
+        // Simulate the message event
+        const messageEvent = new MessageEvent('message', {
+            data: JSON.stringify({ message: 'submit_preferences' }),
+        });
+
+        window.dispatchEvent(messageEvent);
+
+        // Verify setCategories was called with the normalized categories
+        expect(mockSetCategories).toHaveBeenCalledWith({
+            'ta-1': true,
+            'ta-2': true,
+            'ta-3': true,
+            'ta-4': true,
+        });
+    });
+
+    test('should ignore non-TrustArc messages', () => {
+        const settings: TrustArcSettings = {};
+        const mockSetCategories = jest.fn();
+
+        withTrustArc(mockAnalytics, settings);
+
+        // Get the registered callback
+        const registerCallback = capturedConfig.registerOnConsentChanged;
+        registerCallback(mockSetCategories);
+
+        // Simulate a message event with different content
+        const messageEvent = new MessageEvent('message', {
+            data: JSON.stringify({ message: 'some_other_message' }),
+        });
+
+        window.dispatchEvent(messageEvent);
+
+        // Verify setCategories was NOT called
+        expect(mockSetCategories).not.toHaveBeenCalled();
+    });
+
+    test('should handle malformed message data', () => {
+        const settings: TrustArcSettings = {};
+        const mockSetCategories = jest.fn();
+
+        withTrustArc(mockAnalytics, settings);
+
+        // Get the registered callback
+        const registerCallback = capturedConfig.registerOnConsentChanged;
+        registerCallback(mockSetCategories);
+
+        // Simulate a message event with invalid JSON
+        const messageEvent = new MessageEvent('message', {
+            data: 'not valid json',
+        });
+
+        window.dispatchEvent(messageEvent);
+
+        // Should not throw and setCategories should not be called
+        expect(mockSetCategories).not.toHaveBeenCalled();
+    });
+
+    test('should handle empty message data', () => {
+        const settings: TrustArcSettings = {};
+        const mockSetCategories = jest.fn();
+
+        withTrustArc(mockAnalytics, settings);
+
+        // Get the registered callback
+        const registerCallback = capturedConfig.registerOnConsentChanged;
+        registerCallback(mockSetCategories);
+
+        // Simulate a message event with empty data
+        const messageEvent = new MessageEvent('message', {
+            data: '',
+        });
+
+        window.dispatchEvent(messageEvent);
+
+        // Should not throw and setCategories should not be called
+        expect(mockSetCategories).not.toHaveBeenCalled();
     });
 });
 
