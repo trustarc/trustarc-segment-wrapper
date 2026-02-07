@@ -82,6 +82,11 @@ const getConsentModel = (settings: TrustArcSettings) => {
         }
     }
 
+    // Warn if both consent model settings are configured (they conflict)
+    if (settings.consentModelBasedOnConsentExperience === true && typeof settings.consentModel === 'function') {
+        console.warn('[TrustArc Wrapper] Both consentModelBasedOnConsentExperience and consentModel are set. consentModelBasedOnConsentExperience takes precedence and your custom consentModel function will be ignored.');
+    }
+
     if (settings.consentModelBasedOnConsentExperience === true) {
         consentModel = coerceConsentModel(getConsentExperience());
         settings.enableDebugLogging && log(`getConsentModel triggered and returned ${consentModel} based on consent experience.`);
