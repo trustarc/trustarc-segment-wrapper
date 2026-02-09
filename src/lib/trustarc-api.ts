@@ -45,7 +45,8 @@ export interface TrustArcGlobal {
         bindMap: {
             behaviorManager: TaConsentModel,
             behavior: string,
-            categoryCount: number, 
+            categoryCount: number,
+            categoriesIndexesFromReferer: string,
             domain: String
         }
     },
@@ -103,6 +104,8 @@ export const getAllCategories = (): GroupInfo[] => {
     // Here we will preappend a string "ta-" for compatinility with Segment.
     // Bucketing will be "ta-1", "ta-2"... "ta-n" being n the amount of categories 
     const numberOfGroups = trustArcGlobal.eu.bindMap.categoryCount
+        || trustArcGlobal.eu.bindMap.categoriesIndexesFromReferer?.split('|').length
+        || 0
     const consentGroups = []
 
     for (let index = 1; index <= numberOfGroups; index++) {
@@ -120,8 +123,8 @@ export const getNormalizedActiveGroupIds = (consentModel: string): ActiveGroupId
 
     const decision = trustArcGlobal.cma.callApi(
         'getGDPRConsentDecision',
-        trustArcGlobal.eu.bindMap.domain
-    )
+        window.location.hostname
+    );
 
     // If the visitor has provided consent, then return their consent decision
     if(decision.source == "asserted") {

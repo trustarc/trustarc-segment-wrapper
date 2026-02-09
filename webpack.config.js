@@ -1,9 +1,10 @@
 const path = require('path');
+const { version } = require('./package.json');
 
 module.exports = {
-    entry: './src/index.ts', // Your main file
+    entry: './src/index.ts',
     output: {
-        filename: 'index.js',
+        filename: `trustarc-segment-wrapper-v${version}.js`,
         path: path.resolve(__dirname, 'dist'),
         library: {
             name: 'TrustArcWrapper',

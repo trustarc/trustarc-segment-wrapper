@@ -3,9 +3,10 @@ import {
     getNormalizedActiveGroupIds,
     getNormalizedCategories,
     coerceConsentModel,
-    TrustArcGlobal,
     TaConsentModel,
+    TaConsentExperience,
     getAllCategories,
+    getConsentExperience,
 } from '../lib/trustarc-api'
 describe("getTrustArcGlobal", () => {
     test('should return "undefined" when TrustArcs global is not available', () => {
@@ -56,6 +57,38 @@ describe("coerceConsentModel", () => {
 
     test('Should return opt-in when the behavior value is different from us or eu', () => {
         expect(coerceConsentModel("somerandomstring")).toBe("opt-in");
+    });
+
+    test('Should return opt-out when the behavior value is implied', () => {
+        expect(coerceConsentModel("implied")).toBe("opt-out");
+    });
+
+    test('Should return opt-in when the behavior value is expressed', () => {
+        expect(coerceConsentModel("expressed")).toBe("opt-in");
+    });
+
+    test('Should return opt-out when the behavior value is na', () => {
+        expect(coerceConsentModel(TaConsentModel.na)).toBe("opt-out");
+    });
+
+    test('Should return opt-in when the behavior value is an', () => {
+        expect(coerceConsentModel(TaConsentModel.an)).toBe("opt-in");
+    });
+
+    test('Should return opt-in when the behavior value is af', () => {
+        expect(coerceConsentModel(TaConsentModel.af)).toBe("opt-in");
+    });
+
+    test('Should return opt-in when the behavior value is as', () => {
+        expect(coerceConsentModel(TaConsentModel.as)).toBe("opt-in");
+    });
+
+    test('Should return opt-in when the behavior value is sa', () => {
+        expect(coerceConsentModel(TaConsentModel.sa)).toBe("opt-in");
+    });
+
+    test('Should return opt-in when the behavior value is oc', () => {
+        expect(coerceConsentModel(TaConsentModel.oc)).toBe("opt-in");
     });
 });
 
@@ -147,11 +180,11 @@ describe("getNormalizedActiveGroupIds", () => {
                     categoryCount: 4,
                     domain: "test.com"
                 }
-            }, 
+            },
             cma: {
-                callApi: (a: string, b: string) => {
+                callApi: (_a: string, _b: string) => {
                     return {
-                        source: "asserted", 
+                        source: "asserted",
                         consentDecision: [1, 2, 3, 4]
                     }
                 }
@@ -178,9 +211,9 @@ describe("getNormalizedActiveGroupIds", () => {
                }
            }, 
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "implied", 
+                       source: "implied",
                        consentDecision: [0]
                    }
                }
@@ -203,11 +236,11 @@ describe("getNormalizedActiveGroupIds", () => {
                categoryCount: 3,
                domain: "test.com"
            }
-       }, 
+       },
        cma: {
-           callApi: (a: string, b: string) => {
+           callApi: (_a: string, _b: string) => {
                return {
-                   source: "implied", 
+                   source: "implied",
                    consentDecision: [0]
                }
            }
@@ -234,9 +267,9 @@ test('when having 3 categories, 1 and 3 accepted and consent model is opt-in', (
            }
        }, 
        cma: {
-           callApi: (a: string, b: string) => {
+           callApi: (_a: string, _b: string) => {
                return {
-                   source: "asserted", 
+                   source: "asserted",
                    consentDecision: [1, 3]
                }
            }
@@ -261,9 +294,9 @@ test('when having 3 categories, 1 and 3 accepted and consent model is opt-out', 
            }
        }, 
        cma: {
-           callApi: (a: string, b: string) => {
+           callApi: (_a: string, _b: string) => {
                return {
-                   source: "asserted", 
+                   source: "asserted",
                    consentDecision: [1, 3]
                }
            }
@@ -293,11 +326,11 @@ describe("getNormalizedCategories", () => {
                    categoryCount: 3,
                    domain: "test.com"
                }
-           }, 
+           },
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "asserted", 
+                       source: "asserted",
                        consentDecision: [1, 3]
                    }
                }
@@ -322,11 +355,11 @@ describe("getNormalizedCategories", () => {
                    categoryCount: 3,
                    domain: "test.com"
                }
-           }, 
+           },
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "asserted", 
+                       source: "asserted",
                        consentDecision: [1, 3]
                    }
                }
@@ -353,9 +386,9 @@ describe("getNormalizedCategories", () => {
                }
            }, 
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "asserted", 
+                       source: "asserted",
                        consentDecision: [1, 2, 3, 4]
                    }
                }
@@ -383,9 +416,9 @@ describe("getNormalizedCategories", () => {
                }
            }, 
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "implied", 
+                       source: "implied",
                        consentDecision: [0]
                    }
                }
@@ -413,9 +446,9 @@ describe("getNormalizedCategories", () => {
                }
            }, 
            cma: {
-               callApi: (a: string, b: string) => {
+               callApi: (_a: string, _b: string) => {
                    return {
-                       source: "implied", 
+                       source: "implied",
                        consentDecision: [0]
                    }
                }
@@ -438,10 +471,167 @@ describe("getNormalizedCategories", () => {
        const trustArcActiveGroups = getNormalizedCategories("opt-out");
        expect(trustArcActiveGroups).toEqual({});
     });
-    
+
     afterEach(() => {
         jest.resetAllMocks();
         window.truste = undefined; // Or null, depending on how you want to reset it
+    });
+});
+
+describe("getConsentExperience", () => {
+    test('Should return the behavior from TrustArc global when available', () => {
+        // Mock the window.truste global variable
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.eu,
+                    categoryCount: 4,
+                    domain: "test.com",
+                    behavior: "expressed"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const consentExperience = getConsentExperience();
+        expect(consentExperience).toBe("expressed");
+    });
+
+    test('Should return implied when TrustArc global is undefined', () => {
+        window.truste = undefined;
+        const consentExperience = getConsentExperience();
+        expect(consentExperience).toBe(TaConsentExperience.implied);
+    });
+
+    test('Should return the behavior as implied when set', () => {
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.us,
+                    categoryCount: 4,
+                    domain: "test.com",
+                    behavior: "implied"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const consentExperience = getConsentExperience();
+        expect(consentExperience).toBe("implied");
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+        window.truste = undefined;
+    });
+});
+
+describe("getAllCategories with categoriesIndexesFromReferer", () => {
+    test('Should use categoriesIndexesFromReferer when categoryCount is not available', () => {
+        // Mock the window.truste global variable without categoryCount
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.eu,
+                    categoryCount: 0,
+                    categoriesIndexesFromReferer: "1|2|3",
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const allCategories = getAllCategories();
+
+        expect(allCategories.length).toBe(3);
+        expect(allCategories[0].groupId).toBe("ta-1");
+        expect(allCategories[1].groupId).toBe("ta-2");
+        expect(allCategories[2].groupId).toBe("ta-3");
+    });
+
+    test('Should prefer categoryCount over categoriesIndexesFromReferer when both are available', () => {
+        // Mock the window.truste global variable with both properties
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.eu,
+                    categoryCount: 2,
+                    categoriesIndexesFromReferer: "1|2|3|4|5",
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const allCategories = getAllCategories();
+
+        // Should use categoryCount (2) instead of categoriesIndexesFromReferer (5)
+        expect(allCategories.length).toBe(2);
+    });
+
+    test('Should use categoriesIndexesFromReferer when categoryCount is null', () => {
+        // Mock the window.truste global variable with null categoryCount
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.eu,
+                    categoryCount: null as any,
+                    categoriesIndexesFromReferer: "1|2|3|4",
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const allCategories = getAllCategories();
+
+        expect(allCategories.length).toBe(4);
+        expect(allCategories[0].groupId).toBe("ta-1");
+        expect(allCategories[1].groupId).toBe("ta-2");
+        expect(allCategories[2].groupId).toBe("ta-3");
+        expect(allCategories[3].groupId).toBe("ta-4");
+    });
+
+    test('Should use categoriesIndexesFromReferer when categoryCount is undefined', () => {
+        // Mock the window.truste global variable with undefined categoryCount
+        window.truste = {
+            eu: {
+                bindMap: {
+                    behaviorManager: TaConsentModel.eu,
+                    categoryCount: undefined as any,
+                    categoriesIndexesFromReferer: "1|2|3|4|5|6",
+                    domain: "test.com"
+                }
+            },
+            cma: {
+                callApi: jest.fn()
+            }
+        };
+
+        const allCategories = getAllCategories();
+
+        expect(allCategories.length).toBe(6);
+        expect(allCategories[0].groupId).toBe("ta-1");
+        expect(allCategories[1].groupId).toBe("ta-2");
+        expect(allCategories[2].groupId).toBe("ta-3");
+        expect(allCategories[3].groupId).toBe("ta-4");
+        expect(allCategories[4].groupId).toBe("ta-5");
+        expect(allCategories[5].groupId).toBe("ta-6");
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+        window.truste = undefined;
     });
 });
 
